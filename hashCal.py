@@ -11,7 +11,7 @@ def calculate_file_hash(filepath):
 
 
 if __name__ == "__main__":
-    file_path = "/Users/shutonglou/Desktop/Protools session file test/gt t_副本2.ptx"
+    file_path = "your path file"
     file_hash = calculate_file_hash(file_path)
     print("SHA256:", file_hash)
 
