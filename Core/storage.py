@@ -1,7 +1,8 @@
 import json
 import os
 
-STORAGE_FILE = "sessions.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STORAGE_FILE = os.path.join(BASE_DIR, "sessions.json")
 
 def load_sessions():
     if not os.path.exists(STORAGE_FILE):
@@ -14,10 +15,3 @@ def save_session(event):
     sessions.append(event.to_dict())
     with open(STORAGE_FILE, "w") as f:
         json.dump(sessions, f, indent=4)
-
-def find_session(session_id):
-    sessions = load_sessions()
-    for s in sessions:
-        if s["session_id"] == session_id:
-            return s
-    return None

@@ -1,0 +1,16 @@
+[
+    {
+        "session_id": "076df55a-dfc1-49c4-a940-97ff54703c2b",
+        "parent_id": null,
+        "timestamp": "2026-02-26T15:30:16.269033",
+        "file_hash": "525980c0042f02e7511475d720959231fe49825f46c6b7dd43a267f0c0fca571",
+        "description": ""
+    },
+    {
+        "session_id": "5e0d52f2-cbdc-4a09-a1ec-6c16cb3cacab",
+        "parent_id": "076df55a-dfc1-49c4-a940-97ff54703c2b",
+        "timestamp": "2026-02-26T15:30:16.278845",
+        "file_hash": "b2cde84d2db67338498b70b26b8b52b00116391710a2164c63912f6d9ea5bc38",
+        "description": ""
+    }
+]

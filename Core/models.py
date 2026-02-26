@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from typing import Optional
 from datetime import datetime
 import uuid
 import hashlib
@@ -7,7 +8,7 @@ import os
 @dataclass
 class SessionEvent:
     session_id: str
-    parent_id: str | None
+    parent_id: Optional[str]
     timestamp: str
     file_hash: str
     description: str
