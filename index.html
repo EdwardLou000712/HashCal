@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pro Tools Ledger Manager</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 40px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        input, textarea, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1557b0; }
+        .btn-alt { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
+        .btn-alt:hover { background: #e8eaed; }
+        pre { background: #202124; color: #8ab4f8; padding: 15px; border-radius: 8px; font-size: 12px; overflow-x: auto; position: relative; }
+        .copy-badge { position: absolute; right: 10px; top: 10px; background: #444; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .history-box { max-height: 400px; overflow-y: auto; }
+        .history-item { border-bottom: 1px solid #eee; padding: 10px 0; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="margin:0">PTX Hash Tree Manager</h1>
+        <button onclick="exportLedger()" class="btn-alt" style="width: auto; margin-top: 15px;">💾 Download sessions.json Ledger</button>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Track New Version</h3>
+            <input type="file" id="fileInput" accept=".ptx">
+            <input type="text" id="parentId" placeholder="Parent Session ID (Optional)">
+            <button class="btn-alt" onclick="useLatest()">Use Latest as Parent</button>
+            <textarea id="desc" placeholder="Notes (e.g. Mixed bass and kick)"></textarea>
+            <button onclick="trackSession()">Generate Credential</button>
+            
+            <h4>Current Credential:</h4>
+            <pre id="output"><div class="copy-badge" onclick="copyResult()">Copy</div><span id="jsonText">{}</span></pre>
+        </div>
+
+        <div class="card">
+            <h3>Project History</h3>
+            <div id="historyList" class="history-box">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:5000";
+        let history = [];
+
+        async function refreshHistory() {
+            try {
+                const res = await fetch(`${API}/sessions`);
+                history = await res.json();
+                const list = document.getElementById('historyList');
+                list.innerHTML = history.length ? history.reverse().map(s => `
+                    <div class="history-item">
+                        <b>${s.file_name}</b><br>
+                        <small style="color:#666">ID: ${s.session_id}</small><br>
+                        <small>${s.description || 'No notes'}</small>
+                    </div>
+                `).join('') : "No project history yet.";
+            } catch (e) { list.innerText = "Offline: Start Python Backend."; }
+        }
+
+        async function trackSession() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return alert("Select a .ptx file");
+
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('parent_id', document.getElementById('parentId').value);
+            fd.append('description', document.getElementById('desc').value);
+
+            const res = await fetch(`${API}/track`, { method: 'POST', body: fd });
+            const data = await res.json();
+            document.getElementById('jsonText').textContent = JSON.stringify(data, null, 4);
+            refreshHistory();
+        }
+
+        async function exportLedger() {
+            try {
+                const res = await fetch(`${API}/sessions`);
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 4)], {type: 'application/json'});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "sessions.json";
+                a.click();
+            } catch (e) { alert("Server not responding."); }
+        }
+
+        function useLatest() {
+            if (history.length) document.getElementById('parentId').value = history[0].session_id;
+        }
+
+        function copyResult() {
+            const text = document.getElementById('jsonText').textContent;
+            navigator.clipboard.writeText(text);
+            alert("Credential copied to clipboard!");
+        }
+
+        refreshHistory();
+    </script>
+</body>
+</html>
