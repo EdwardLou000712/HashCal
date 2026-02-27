@@ -1,195 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Tools Session Tracker v2</title>
+    <title>Pro Tools Ledger Manager</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            max-width: 650px; 
-            margin: 2rem auto; 
-            padding: 1rem; 
-            background: #f0f2f5; 
-            color: #1a1a1b;
-        }
-        .card { 
-            background: white; 
-            padding: 2rem; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08); 
-        }
-        h2 { margin-top: 0; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        .section-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 1rem; display: block; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-        input[type="text"], input[type="file"] { 
-            width: 100%; 
-            padding: 0.7rem; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px; 
-            box-sizing: border-box;
-            background: #f8fafc;
-        }
-        .btn-group { display: flex; gap: 10px; margin-top: 1rem; }
-        button { 
-            flex: 1;
-            background: #4f46e5; 
-            color: white; 
-            border: none; 
-            padding: 0.8rem; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        button:hover { background: #4338ca; transform: translateY(-1px); }
-        button.secondary { background: #64748b; }
-        button.secondary:hover { background: #475569; }
-        button:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
-        
-        #downloadBtn { background: #10b981; display: none; margin-top: 10px; }
-        #downloadBtn:hover { background: #059669; }
-
-        pre { 
-            background: #0f172a; 
-            color: #38bdf8; 
-            padding: 1.2rem; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            font-size: 0.85rem;
-            border: 1px solid #334155;
-            min-height: 40px;
-        }
-        .import-box {
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-            border: 1px dashed #cbd5e1;
-        }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 40px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        input, textarea, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1557b0; }
+        .btn-alt { background: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
+        .btn-alt:hover { background: #e8eaed; }
+        pre { background: #202124; color: #8ab4f8; padding: 15px; border-radius: 8px; font-size: 12px; overflow-x: auto; position: relative; }
+        .copy-badge { position: absolute; right: 10px; top: 10px; background: #444; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .history-box { max-height: 400px; overflow-y: auto; }
+        .history-item { border-bottom: 1px solid #eee; padding: 10px 0; font-size: 13px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>PTX Session Manager</h2>
 
-        <div class="import-box">
-            <span class="section-label">1. Link to Lineage (Optional)</span>
-            <label for="importJson">Import previous .json credential:</label>
-            <input type="file" id="importJson" accept=".json" onchange="importParentId()">
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">This automatically sets the Parent ID from your last saved version.</p>
-        </div>
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="margin:0">PTX Hash Tree Manager</h1>
+        <button onclick="exportLedger()" class="btn-alt" style="width: auto; margin-top: 15px;">💾 Download sessions.json Ledger</button>
+    </div>
 
-        <span class="section-label">2. Create New Version</span>
-        <div class="form-group">
-            <label for="fileInput">New .ptx Session File:</label>
+    <div class="grid">
+        <div class="card">
+            <h3>Track New Version</h3>
             <input type="file" id="fileInput" accept=".ptx">
+            <input type="text" id="parentId" placeholder="Parent Session ID (Optional)">
+            <button class="btn-alt" onclick="useLatest()">Use Latest as Parent</button>
+            <textarea id="desc" placeholder="Notes (e.g. Mixed bass and kick)"></textarea>
+            <button onclick="trackSession()">Generate Credential</button>
+            
+            <h4>Current Credential:</h4>
+            <pre id="output"><div class="copy-badge" onclick="copyResult()">Copy</div><span id="jsonText">{}</span></pre>
         </div>
-        
-        <div class="form-group">
-            <label for="parentId">Parent Session ID:</label>
-            <input type="text" id="parentId" placeholder="Manual entry or auto-filled by import">
-        </div>
-        
-        <div class="form-group">
-            <label for="description">Version Notes:</label>
-            <input type="text" id="description" placeholder="e.g. Adjusted vocal levels in bridge">
-        </div>
-        
-        <button id="generateBtn" onclick="generateCredential()">Generate & Hash</button>
 
-        <h3 style="margin-top: 2rem; font-size: 1rem; color: #475569;">Credential Result:</h3>
-        <pre id="output">// Result will appear here...</pre>
-        <button id="downloadBtn" onclick="downloadJson()">Download Credential (.json)</button>
+        <div class="card">
+            <h3>Project History</h3>
+            <div id="historyList" class="history-box">Loading...</div>
+        </div>
     </div>
 
     <script>
-        let currentCredential = null;
+        const API = "http://127.0.0.1:5000";
+        let history = [];
 
-        // Function to read a JSON file and extract the session_id
-        function importParentId() {
-            const file = document.getElementById('importJson').files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.session_id) {
-                        document.getElementById('parentId').value = data.session_id;
-                        alert("Lineage Linked! Parent ID has been updated.");
-                    } else {
-                        alert("Error: Selected JSON does not contain a valid session_id.");
-                    }
-                } catch (err) {
-                    alert("Error parsing JSON file.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // Web Crypto API SHA-256
-        async function calculateSHA256(file) {
-            const arrayBuffer = await file.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function generateCredential() {
-            const fileInput = document.getElementById('fileInput');
-            const parentId = document.getElementById('parentId').value.trim();
-            const description = document.getElementById('description').value.trim();
-            const output = document.getElementById('output');
-            const downloadBtn = document.getElementById('downloadBtn');
-
-            if (fileInput.files.length === 0) {
-                alert('Please select a Pro Tools (.ptx) file.');
-                return;
-            }
-
-            output.textContent = "Calculating cryptographic hash (this may take a moment for large files)...";
-            downloadBtn.style.display = "none";
-
+        async function refreshHistory() {
             try {
-                const file = fileInput.files[0];
-                const fileHash = await calculateSHA256(file);
-                
-                currentCredential = {
-                    session_id: crypto.randomUUID(),
-                    parent_id: parentId || null,
-                    timestamp: new Date().toISOString(),
-                    file_hash: fileHash,
-                    file_name: file.name,
-                    description: description
-                };
-
-                output.textContent = JSON.stringify(currentCredential, null, 4);
-                downloadBtn.style.display = "block";
-            } catch (error) {
-                output.textContent = "Error: " + error.message;
-            }
+                const res = await fetch(`${API}/sessions`);
+                history = await res.json();
+                const list = document.getElementById('historyList');
+                list.innerHTML = history.length ? history.reverse().map(s => `
+                    <div class="history-item">
+                        <b>${s.file_name}</b><br>
+                        <small style="color:#666">ID: ${s.session_id}</small><br>
+                        <small>${s.description || 'No notes'}</small>
+                    </div>
+                `).join('') : "No project history yet.";
+            } catch (e) { list.innerText = "Offline: Start Python Backend."; }
         }
 
-        // Function to download the result as a file
-        function downloadJson() {
-            if (!currentCredential) return;
+        async function trackSession() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return alert("Select a .ptx file");
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentCredential, null, 4));
-            const downloadAnchorNode = document.createElement('a');
-            
-            // Format filename: session_v2_2023-10-27.json
-            const date = new Date().toISOString().split('T')[0];
-            const fileName = `session_credential_${date}.json`;
-            
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", fileName);
-            document.body.appendChild(downloadAnchorNode); 
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('parent_id', document.getElementById('parentId').value);
+            fd.append('description', document.getElementById('desc').value);
+
+            const res = await fetch(`${API}/track`, { method: 'POST', body: fd });
+            const data = await res.json();
+            document.getElementById('jsonText').textContent = JSON.stringify(data, null, 4);
+            refreshHistory();
         }
+
+        async function exportLedger() {
+            try {
+                const res = await fetch(`${API}/sessions`);
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 4)], {type: 'application/json'});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "sessions.json";
+                a.click();
+            } catch (e) { alert("Server not responding."); }
+        }
+
+        function useLatest() {
+            if (history.length) document.getElementById('parentId').value = history[0].session_id;
+        }
+
+        function copyResult() {
+            const text = document.getElementById('jsonText').textContent;
+            navigator.clipboard.writeText(text);
+            alert("Credential copied to clipboard!");
+        }
+
+        refreshHistory();
     </script>
 </body>
 </html>
