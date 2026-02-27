@@ -1,5 +1,6 @@
 # HashCal基础服务器版
-将HashCal核心组件作为后端与静止html前端分离的简易MVP。
+将HashCal核心组件作为后端与html前端分离的简易MVP。
+后端通过flask WGSI直接在电脑上本地搭建服务器，前端就是一个html页面。
 
 # 前置条件
 
